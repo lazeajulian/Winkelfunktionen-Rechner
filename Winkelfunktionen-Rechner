@@ -1,0 +1,646 @@
+!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Winkelfunktionen & Dreiecksrechner | Fertigung & CAD</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #e5e7eb;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    /* Millimeterpapier-Hintergrund für die technische Zeichenfläche */
+    .cad-grid {
+      background-color: #1e293b;
+      background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+      background-size: 10px 10px, 10px 10px, 50px 50px, 50px 50px;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col justify-between">
+
+  <!-- Header / Navigation -->
+  <header class="bg-slate-900 text-white border-b border-slate-700 shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center space-x-3">
+        <div class="bg-amber-500 text-slate-950 p-2 rounded-lg font-bold flex items-center justify-center shadow">
+          <i data-lucide="triangle" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight">Trigonometrie & Dreiecksrechner</h1>
+          <p class="text-xs text-slate-400">Rechtwinkliges Dreieck (γ = 90°) für Werkstatt & Konstruktion</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="btnReset" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs rounded-md border border-slate-600 transition flex items-center gap-1.5 shadow-sm">
+          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Standardwerte
+        </button>
+        <button id="btnCopyValues" class="px-3 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs rounded-md transition flex items-center gap-1.5 shadow">
+          <i data-lucide="clipboard-copy" class="w-3.5 h-3.5"></i> Werte kopieren
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hauptbereich -->
+  <main class="max-w-7xl mx-auto w-full p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow">
+    
+    <!-- Linke Spalte: Eingabe & Berechnungen -->
+    <div class="lg:col-span-5 flex flex-col gap-6">
+      
+      <!-- Eingabe-Card -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-300 p-5">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-200 mb-4">
+          <h2 class="font-bold text-slate-800 flex items-center gap-2 text-sm uppercase tracking-wider">
+            <i data-lucide="sliders" class="w-4 h-4 text-amber-600"></i>
+            Gegebene Größen wählen
+          </h2>
+          <span class="text-xs bg-slate-100 text-slate-600 font-mono px-2 py-0.5 rounded border border-slate-200">2 Werte erforderlich</span>
+        </div>
+
+        <!-- Modus-Auswahl -->
+        <div class="mb-4">
+          <label class="block text-xs font-semibold text-slate-600 mb-1.5">Kombination der bekannten Maße</label>
+          <select id="calcMode" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm font-medium focus:ring-2 focus:ring-amber-500 focus:outline-none transition">
+            <option value="a_alpha">Kathete a + Winkel α</option>
+            <option value="b_alpha">Kathete b + Winkel α</option>
+            <option value="c_alpha">Hypotenuse c + Winkel α</option>
+            <option value="a_b">Zwei Katheten (a und b)</option>
+            <option value="a_c">Kathete a + Hypotenuse c</option>
+            <option value="b_c">Kathete b + Hypotenuse c</option>
+          </select>
+        </div>
+
+        <!-- Dynamische Eingabefelder -->
+        <div class="space-y-4" id="inputContainer">
+          <!-- Erstes Eingabefeld -->
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <label id="labelVal1" class="text-xs font-semibold text-slate-700">Kathete a (Gegenkathete)</label>
+              <span id="unitVal1" class="text-xs font-mono text-slate-400">mm</span>
+            </div>
+            <div class="relative">
+              <input type="number" id="inputVal1" step="any" min="1" max="10000" value="400" 
+                class="w-full font-mono text-base font-semibold bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none transition">
+            </div>
+            <p id="hintVal1" class="text-[11px] text-slate-500 mt-1">Gegenüberliegend von Winkel α</p>
+          </div>
+
+          <!-- Zweites Eingabefeld -->
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <label id="labelVal2" class="text-xs font-semibold text-slate-700">Winkel α</label>
+              <span id="unitVal2" class="text-xs font-mono text-slate-400">Grad (°)</span>
+            </div>
+            <div class="relative">
+              <input type="number" id="inputVal2" step="any" min="0.1" max="89.9" value="30" 
+                class="w-full font-mono text-base font-semibold bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none transition">
+            </div>
+            <p id="hintVal2" class="text-[11px] text-slate-500 mt-1">Muss zwischen 0,1° und 89,9° liegen</p>
+          </div>
+        </div>
+
+        <!-- Fehlermeldung Box -->
+        <div id="errorBox" class="hidden mt-4 p-3 bg-rose-50 border border-rose-300 text-rose-700 rounded-lg text-xs flex items-start gap-2">
+          <i data-lucide="alert-circle" class="w-4 h-4 mt-0.5 flex-shrink-0"></i>
+          <span id="errorMessage">Ungültige Eingabe.</span>
+        </div>
+      </div>
+
+      <!-- Berechnete Ergebniswerte -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-300 p-5">
+        <h2 class="font-bold text-slate-800 flex items-center gap-2 text-sm uppercase tracking-wider pb-3 border-b border-slate-200 mb-4">
+          <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
+          Ergebnisse (Fertigungsmaße)
+        </h2>
+        
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <!-- Kathete a -->
+          <div class="bg-slate-50 border border-slate-200 p-3 rounded-lg">
+            <span class="text-xs text-slate-500 block font-medium">Kathete a (Gegenkathete)</span>
+            <div class="flex items-baseline gap-1 mt-1">
+              <span id="res_a" class="text-lg font-bold font-mono text-slate-900">400.00</span>
+              <span class="text-xs font-mono text-slate-500">mm</span>
+            </div>
+          </div>
+          <!-- Kathete b -->
+          <div class="bg-slate-50 border border-slate-200 p-3 rounded-lg">
+            <span class="text-xs text-slate-500 block font-medium">Kathete b (Ankathete)</span>
+            <div class="flex items-baseline gap-1 mt-1">
+              <span id="res_b" class="text-lg font-bold font-mono text-slate-900">692.82</span>
+              <span class="text-xs font-mono text-slate-500">mm</span>
+            </div>
+          </div>
+          <!-- Hypotenuse c -->
+          <div class="bg-slate-50 border border-slate-200 p-3 rounded-lg col-span-2">
+            <span class="text-xs text-slate-500 block font-medium">Hypotenuse c</span>
+            <div class="flex items-baseline gap-1 mt-1">
+              <span id="res_c" class="text-xl font-bold font-mono text-amber-600">800.00</span>
+              <span class="text-xs font-mono text-slate-500">mm</span>
+            </div>
+          </div>
+          <!-- Winkel Alpha -->
+          <div class="bg-slate-50 border border-slate-200 p-3 rounded-lg">
+            <span class="text-xs text-slate-500 block font-medium">Winkel α</span>
+            <div class="flex items-baseline gap-1 mt-1">
+              <span id="res_alpha" class="text-lg font-bold font-mono text-slate-900">30.00</span>
+              <span class="text-xs font-mono text-slate-500">°</span>
+            </div>
+          </div>
+          <!-- Winkel Beta -->
+          <div class="bg-slate-50 border border-slate-200 p-3 rounded-lg">
+            <span class="text-xs text-slate-500 block font-medium">Winkel β</span>
+            <div class="flex items-baseline gap-1 mt-1">
+              <span id="res_beta" class="text-lg font-bold font-mono text-slate-900">60.00</span>
+              <span class="text-xs font-mono text-slate-500">°</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-xs text-slate-500 flex justify-between px-1">
+          <span>Winkel γ: <strong class="font-mono text-slate-700">90.00°</strong></span>
+          <span>Fläche A: <strong id="res_area" class="font-mono text-slate-700">138564.06 mm²</strong></span>
+        </div>
+      </div>
+
+      <!-- Formeln & Rechenweg -->
+      <div class="bg-slate-100 rounded-xl border border-slate-300 p-4">
+        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+          <i data-lucide="book-open" class="w-3.5 h-3.5 text-slate-600"></i>
+          Angewendete Formeln / Lösungsweg
+        </h3>
+        <div id="formulaSteps" class="space-y-1.5 text-xs text-slate-600 font-mono bg-white p-3 rounded-lg border border-slate-200">
+          <!-- Wird dynamisch befüllt -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Rechte Spalte: CAD-Zeichenfläche & Bemaßung -->
+    <div class="lg:col-span-7 flex flex-col gap-4">
+      
+      <!-- Zeichenfläche Card -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-300 overflow-hidden flex flex-col">
+        <div class="bg-slate-800 text-white px-4 py-2.5 flex items-center justify-between border-b border-slate-700">
+          <div class="flex items-center gap-2">
+            <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+            <span class="text-xs font-bold tracking-wide uppercase font-mono">Maßstabsgetreue CAD-Ansicht</span>
+          </div>
+          <span id="scaleLabel" class="text-xs font-mono bg-slate-900 px-2 py-0.5 rounded text-amber-400 border border-slate-700">Maßstab auto</span>
+        </div>
+
+        <!-- SVG Container -->
+        <div class="cad-grid w-full h-[440px] md:h-[480px] p-2 flex items-center justify-center relative select-none">
+          <svg id="cadSvg" class="w-full h-full" viewBox="0 0 700 500" preserveAspectRatio="xMidYMid meet">
+            <defs>
+              <!-- Pfeilspitze Maßlinien -->
+              <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#f59e0b" />
+              </marker>
+              <marker id="arrow-cyan" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#38bdf8" />
+              </marker>
+            </defs>
+            <g id="drawingLayer"></g>
+          </svg>
+
+          <!-- Status Overlay oben rechts -->
+          <div class="absolute top-4 right-4 bg-slate-900/80 backdrop-blur border border-slate-700 text-slate-300 text-[11px] p-2 rounded font-mono space-y-0.5">
+            <div>γ = 90° (Ecke C)</div>
+            <div>Katheten a ⟂ b</div>
+          </div>
+        </div>
+
+        <div class="p-3 bg-slate-50 border-t border-slate-200 text-xs text-slate-600 flex flex-wrap justify-between items-center gap-2">
+          <div class="flex items-center gap-4">
+            <span class="flex items-center gap-1.5"><span class="w-3 h-0.5 bg-amber-400 inline-block"></span> Kathete a & b</span>
+            <span class="flex items-center gap-1.5"><span class="w-3 h-0.5 bg-sky-400 inline-block"></span> Hypotenuse c</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full border border-emerald-400 inline-block"></span> 90° rechter Winkel</span>
+          </div>
+          <span class="text-slate-400 italic">Exakt maßstabsgetreu skaliert</span>
+        </div>
+      </div>
+
+      <!-- Spickzettel Formeln -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-300 p-4">
+        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+          <i data-lucide="info" class="w-4 h-4 text-amber-500"></i>
+          Trigonometrie Formelsammlung (Rechtwinkliges Dreieck)
+        </h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+          <div class="bg-slate-50 p-2.5 rounded border border-slate-200">
+            <div class="font-bold text-slate-800">Sinus (sin)</div>
+            <div class="font-mono text-slate-600 mt-1">Gegenkathete / Hypotenuse</div>
+            <div class="font-mono text-amber-600 font-semibold mt-0.5">sin(α) = a / c</div>
+          </div>
+          <div class="bg-slate-50 p-2.5 rounded border border-slate-200">
+            <div class="font-bold text-slate-800">Kosinus (cos)</div>
+            <div class="font-mono text-slate-600 mt-1">Ankathete / Hypotenuse</div>
+            <div class="font-mono text-amber-600 font-semibold mt-0.5">cos(α) = b / c</div>
+          </div>
+          <div class="bg-slate-50 p-2.5 rounded border border-slate-200">
+            <div class="font-bold text-slate-800">Tangens (tan)</div>
+            <div class="font-mono text-slate-600 mt-1">Gegenkathete / Ankathete</div>
+            <div class="font-mono text-amber-600 font-semibold mt-0.5">tan(α) = a / b</div>
+          </div>
+          <div class="bg-slate-50 p-2.5 rounded border border-slate-200">
+            <div class="font-bold text-slate-800">Pythagoras</div>
+            <div class="font-mono text-slate-600 mt-1">Satz des Pythagoras</div>
+            <div class="font-mono text-amber-600 font-semibold mt-0.5">a² + b² = c²</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-slate-900 text-slate-400 text-xs py-3 border-t border-slate-800 text-center">
+    Berechnungstool für Winkelfunktionen &bull; Fertigungstechnik & CAD &bull; Bereit für GitHub Pages
+  </footer>
+
+  <!-- Applikationslogik -->
+  <script>
+    // Initialisierung von Lucide Icons
+    lucide.createIcons();
+
+    // DOM-Elemente
+    const calcMode = document.getElementById('calcMode');
+    const inputVal1 = document.getElementById('inputVal1');
+    const inputVal2 = document.getElementById('inputVal2');
+    const labelVal1 = document.getElementById('labelVal1');
+    const labelVal2 = document.getElementById('labelVal2');
+    const unitVal1 = document.getElementById('unitVal1');
+    const unitVal2 = document.getElementById('unitVal2');
+    const hintVal1 = document.getElementById('hintVal1');
+    const hintVal2 = document.getElementById('hintVal2');
+    const errorBox = document.getElementById('errorBox');
+    const errorMessage = document.getElementById('errorMessage');
+    
+    // Ergebnis-Felder
+    const res_a = document.getElementById('res_a');
+    const res_b = document.getElementById('res_b');
+    const res_c = document.getElementById('res_c');
+    const res_alpha = document.getElementById('res_alpha');
+    const res_beta = document.getElementById('res_beta');
+    const res_area = document.getElementById('res_area');
+    const formulaSteps = document.getElementById('formulaSteps');
+    const scaleLabel = document.getElementById('scaleLabel');
+    const drawingLayer = document.getElementById('drawingLayer');
+
+    // Radians-Umrechnung
+    const toRad = deg => (deg * Math.PI) / 180;
+    const toDeg = rad => (rad * 180) / Math.PI;
+
+    // Modus-Konfigurationen
+    const modeConfigs = {
+      'a_alpha': {
+        l1: 'Kathete a (Gegenkathete zu α)', u1: 'mm', h1: 'Rechtwinklige Seite stehend', def1: 400,
+        l2: 'Winkel α', u2: '°', h2: 'Spitzer Winkel gegenüber a (0.1° bis 89.9°)', def2: 30
+      },
+      'b_alpha': {
+        l1: 'Kathete b (Ankathete zu α)', u1: 'mm', h1: 'Rechtwinklige Seite liegend', def1: 692.82,
+        l2: 'Winkel α', u2: '°', h2: 'Spitzer Winkel anliegend an b', def2: 30
+      },
+      'c_alpha': {
+        l1: 'Hypotenuse c', u1: 'mm', h1: 'Längste Seite gegenüber γ (90°)', def1: 800,
+        l2: 'Winkel α', u2: '°', h2: 'Spitzer Winkel gegenüber a', def2: 30
+      },
+      'a_b': {
+        l1: 'Kathete a', u1: 'mm', h1: 'Erste rechtwinklige Seite', def1: 400,
+        l2: 'Kathete b', u2: 'mm', h2: 'Zweite rechtwinklige Seite', def2: 600
+      },
+      'a_c': {
+        l1: 'Kathete a', u1: 'mm', h1: 'Rechtwinklige Kathete (muss < c sein)', def1: 400,
+        l2: 'Hypotenuse c', u2: 'mm', h2: 'Hypotenuse (muss > a sein)', def2: 800
+      },
+      'b_c': {
+        l1: 'Kathete b', u1: 'mm', h1: 'Rechtwinklige Kathete (muss < c sein)', def1: 500,
+        l2: 'Hypotenuse c', u2: 'mm', h2: 'Hypotenuse (muss > b sein)', def2: 800
+      }
+    };
+
+    // Bei Moduswechsel Labels & Vorgaben anpassen
+    function updateModeInputs(resetValues = true) {
+      const mode = calcMode.value;
+      const cfg = modeConfigs[mode];
+      labelVal1.textContent = cfg.l1;
+      unitVal1.textContent = cfg.u1;
+      hintVal1.textContent = cfg.h1;
+
+      labelVal2.textContent = cfg.l2;
+      unitVal2.textContent = cfg.u2;
+      hintVal2.textContent = cfg.h2;
+
+      if (resetValues) {
+        inputVal1.value = cfg.def1;
+        inputVal2.value = cfg.def2;
+      }
+      calculate();
+    }
+
+    // Hauptberechnung
+    function calculate() {
+      const mode = calcMode.value;
+      const v1 = parseFloat(inputVal1.value);
+      const v2 = parseFloat(inputVal2.value);
+
+      errorBox.classList.add('hidden');
+
+      if (isNaN(v1) || isNaN(v2) || v1 <= 0 || v2 <= 0) {
+        showError('Bitte gib für beide Felder positive Zahlen größer als 0 ein.');
+        return;
+      }
+
+      let a = 0, b = 0, c = 0, alpha = 0, beta = 0;
+      let steps = [];
+
+      try {
+        if (mode === 'a_alpha') {
+          a = v1;
+          alpha = v2;
+          if (alpha >= 90) throw 'Winkel α muss kleiner als 90° sein.';
+          beta = 90 - alpha;
+          const aRad = toRad(alpha);
+          c = a / Math.sin(aRad);
+          b = a / Math.tan(aRad);
+
+          steps.push(`1. β = 90° - α = 90° - ${alpha.toFixed(2)}° = <strong>${beta.toFixed(2)}°</strong>`);
+          steps.push(`2. c = a / sin(α) = ${a.toFixed(2)} / sin(${alpha.toFixed(2)}°) = <strong>${c.toFixed(2)} mm</strong>`);
+          steps.push(`3. b = a / tan(α) = ${a.toFixed(2)} / tan(${alpha.toFixed(2)}°) = <strong>${b.toFixed(2)} mm</strong>`);
+        } 
+        else if (mode === 'b_alpha') {
+          b = v1;
+          alpha = v2;
+          if (alpha >= 90) throw 'Winkel α muss kleiner als 90° sein.';
+          beta = 90 - alpha;
+          const aRad = toRad(alpha);
+          c = b / Math.cos(aRad);
+          a = b * Math.tan(aRad);
+
+          steps.push(`1. β = 90° - α = 90° - ${alpha.toFixed(2)}° = <strong>${beta.toFixed(2)}°</strong>`);
+          steps.push(`2. c = b / cos(α) = ${b.toFixed(2)} / cos(${alpha.toFixed(2)}°) = <strong>${c.toFixed(2)} mm</strong>`);
+          steps.push(`3. a = b · tan(α) = ${b.toFixed(2)} · tan(${alpha.toFixed(2)}°) = <strong>${a.toFixed(2)} mm</strong>`);
+        } 
+        else if (mode === 'c_alpha') {
+          c = v1;
+          alpha = v2;
+          if (alpha >= 90) throw 'Winkel α muss kleiner als 90° sein.';
+          beta = 90 - alpha;
+          const aRad = toRad(alpha);
+          a = c * Math.sin(aRad);
+          b = c * Math.cos(aRad);
+
+          steps.push(`1. β = 90° - α = 90° - ${alpha.toFixed(2)}° = <strong>${beta.toFixed(2)}°</strong>`);
+          steps.push(`2. a = c · sin(α) = ${c.toFixed(2)} · sin(${alpha.toFixed(2)}°) = <strong>${a.toFixed(2)} mm</strong>`);
+          steps.push(`3. b = c · cos(α) = ${c.toFixed(2)} · cos(${alpha.toFixed(2)}°) = <strong>${b.toFixed(2)} mm</strong>`);
+        } 
+        else if (mode === 'a_b') {
+          a = v1;
+          b = v2;
+          c = Math.sqrt(a * a + b * b);
+          alpha = toDeg(Math.atan(a / b));
+          beta = 90 - alpha;
+
+          steps.push(`1. c = √(a² + b²) = √(${a.toFixed(2)}² + ${b.toFixed(2)}²) = <strong>${c.toFixed(2)} mm</strong>`);
+          steps.push(`2. tan(α) = a / b = ${a.toFixed(2)} / ${b.toFixed(2)} ➔ α = <strong>${alpha.toFixed(2)}°</strong>`);
+          steps.push(`3. β = 90° - α = <strong>${beta.toFixed(2)}°</strong>`);
+        } 
+        else if (mode === 'a_c') {
+          a = v1;
+          c = v2;
+          if (a >= c) throw 'Die Kathete a muss zwingend kleiner als die Hypotenuse c sein.';
+          b = Math.sqrt(c * c - a * a);
+          alpha = toDeg(Math.asin(a / c));
+          beta = 90 - alpha;
+
+          steps.push(`1. b = √(c² - a²) = √(${c.toFixed(2)}² - ${a.toFixed(2)}²) = <strong>${b.toFixed(2)} mm</strong>`);
+          steps.push(`2. sin(α) = a / c = ${a.toFixed(2)} / ${c.toFixed(2)} ➔ α = <strong>${alpha.toFixed(2)}°</strong>`);
+          steps.push(`3. β = 90° - α = <strong>${beta.toFixed(2)}°</strong>`);
+        } 
+        else if (mode === 'b_c') {
+          b = v1;
+          c = v2;
+          if (b >= c) throw 'Die Kathete b muss zwingend kleiner als die Hypotenuse c sein.';
+          a = Math.sqrt(c * c - b * b);
+          alpha = toDeg(Math.acos(b / c));
+          beta = 90 - alpha;
+
+          steps.push(`1. a = √(c² - b²) = √(${c.toFixed(2)}² - ${b.toFixed(2)}²) = <strong>${a.toFixed(2)} mm</strong>`);
+          steps.push(`2. cos(α) = b / c = ${b.toFixed(2)} / ${c.toFixed(2)} ➔ α = <strong>${alpha.toFixed(2)}°</strong>`);
+          steps.push(`3. β = 90° - α = <strong>${beta.toFixed(2)}°</strong>`);
+        }
+
+        // Werte runden und anzeigen
+        res_a.textContent = a.toFixed(2);
+        res_b.textContent = b.toFixed(2);
+        res_c.textContent = c.toFixed(2);
+        res_alpha.textContent = alpha.toFixed(2);
+        res_beta.textContent = beta.toFixed(2);
+        
+        const area = (a * b) / 2;
+        res_area.textContent = `${area.toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2})} mm²`;
+
+        // Schritte anzeigen
+        formulaSteps.innerHTML = steps.map(s => `<div>${s}</div>`).join('');
+
+        // Maßstabsgetreue Zeichnung rendern
+        drawCADTriangle(a, b, c, alpha, beta);
+
+      } catch (err) {
+        showError(err);
+      }
+    }
+
+    function showError(msg) {
+      errorMessage.textContent = msg;
+      errorBox.classList.remove('hidden');
+    }
+
+    // Maßstabsgetreue SVG-Zeichnung generieren
+    function drawCADTriangle(a, b, c, alpha, beta) {
+      // SVG Canvas Größe: 700 x 500
+      // Punkt A: links unten (Winkel α)
+      // Punkt C: rechts unten (rechter Winkel γ = 90°)
+      // Punkt B: rechts oben (Winkel β)
+      // Kathete b ist horizontal (A -> C)
+      // Kathete a ist vertikal (C -> B)
+      // Hypotenuse c ist die Schräge (A -> B)
+
+      const paddingLeft = 90;
+      const paddingRight = 90;
+      const paddingTop = 70;
+      const paddingBottom = 75;
+
+      const availWidth = 700 - paddingLeft - paddingRight;
+      const availHeight = 500 - paddingTop - paddingBottom;
+
+      // Maßstabsfaktor ermitteln (Verhältnis mm zu SVG-Pixeln)
+      const scaleX = availWidth / b;
+      const scaleY = availHeight / a;
+      const scale = Math.min(scaleX, scaleY);
+
+      scaleLabel.textContent = `Maßstab: 1 mm ≈ ${scale.toFixed(3)} px`;
+
+      // Pixel-Längen
+      const pixB = b * scale;
+      const pixA = a * scale;
+
+      // Zentrierung im verfügbaren Bereich
+      const startX = paddingLeft + (availWidth - pixB) / 2;
+      const startY = 500 - paddingBottom - (availHeight - pixA) / 2;
+
+      // Koordinaten
+      const pA = { x: startX, y: startY };                  // links unten (alpha)
+      const pC = { x: startX + pixB, y: startY };           // rechts unten (90°)
+      const pB = { x: startX + pixB, y: startY - pixA };    // rechts oben (beta)
+
+      // Bemaßungsabstände
+      const dimOffset = 36;
+
+      let svgHtml = '';
+
+      // 1. Dreieck Fläche (leicht transparent)
+      svgHtml += `<polygon points="${pA.x},${pA.y} ${pC.x},${pC.y} ${pB.x},${pB.y}" 
+                    fill="rgba(56, 189, 248, 0.08)" stroke="#38bdf8" stroke-width="2.5" stroke-linejoin="round" />`;
+
+      // 2. Rechter-Winkel-Symbol bei Punkt C
+      const rwSize = Math.min(24, Math.min(pixA, pixB) * 0.25);
+      svgHtml += `<path d="M ${pC.x - rwSize} ${pC.y} L ${pC.x - rwSize} ${pC.y - rwSize} L ${pC.x} ${pC.y - rwSize}" 
+                    fill="none" stroke="#10b981" stroke-width="1.8" />`;
+      // Punkt im rechten Winkel
+      svgHtml += `<circle cx="${pC.x - rwSize * 0.45}" cy="${pC.y - rwSize * 0.45}" r="2" fill="#10b981" />`;
+
+      // 3. Winkelbogen α bei Punkt A
+      const arcRadiusAlpha = Math.min(48, pixB * 0.35, Math.hypot(pB.x - pA.x, pB.y - pA.y) * 0.35);
+      const radAlpha = toRad(alpha);
+      const arcEndX = pA.x + arcRadiusAlpha * Math.cos(radAlpha);
+      const arcEndY = pA.y - arcRadiusAlpha * Math.sin(radAlpha);
+      svgHtml += `<path d="M ${pA.x + arcRadiusAlpha} ${pA.y} A ${arcRadiusAlpha} ${arcRadiusAlpha} 0 0 0 ${arcEndX} ${arcEndY}" 
+                    fill="rgba(245, 158, 11, 0.15)" stroke="#f59e0b" stroke-width="1.5" />`;
+      svgHtml += `<text x="${pA.x + arcRadiusAlpha + 10}" y="${pA.y - 10}" fill="#f59e0b" font-size="12" font-family="JetBrains Mono" font-weight="600">α = ${alpha.toFixed(1)}°</text>`;
+
+      // 4. Winkelbogen β bei Punkt B
+      const arcRadiusBeta = Math.min(40, pixA * 0.35);
+      // Bogen von vertikaler Linie (unten) zur Hypotenuse
+      const radBeta = toRad(beta);
+      const arcBEndX = pB.x - arcRadiusBeta * Math.sin(radBeta);
+      const arcBEndY = pB.y + arcRadiusBeta * Math.cos(radBeta);
+      svgHtml += `<path d="M ${pB.x} ${pB.y + arcRadiusBeta} A ${arcRadiusBeta} ${arcRadiusBeta} 0 0 1 ${arcBEndX} ${arcBEndY}" 
+                    fill="rgba(245, 158, 11, 0.15)" stroke="#f59e0b" stroke-width="1.5" />`;
+      svgHtml += `<text x="${pB.x - arcRadiusBeta - 35}" y="${pB.y + arcRadiusBeta + 5}" fill="#f59e0b" font-size="12" font-family="JetBrains Mono" font-weight="600">β = ${beta.toFixed(1)}°</text>`;
+
+      // 5. Eckpunkt-Beschriftungen (A, B, C)
+      svgHtml += `<text x="${pA.x - 18}" y="${pA.y + 18}" fill="#94a3b8" font-size="14" font-weight="bold" font-family="JetBrains Mono">A</text>`;
+      svgHtml += `<text x="${pC.x + 10}" y="${pC.y + 18}" fill="#94a3b8" font-size="14" font-weight="bold" font-family="JetBrains Mono">C (γ=90°)</text>`;
+      svgHtml += `<text x="${pB.x + 10}" y="${pB.y - 8}" fill="#94a3b8" font-size="14" font-weight="bold" font-family="JetBrains Mono">B</text>`;
+
+      // 6. Bemaßung Kathete b (unten horizontal)
+      const bY = pC.y + dimOffset;
+      // Hilfslinien
+      svgHtml += `<line x1="${pA.x}" y1="${pA.y + 4}" x2="${pA.x}" y2="${bY + 8}" stroke="#475569" stroke-width="1" stroke-dasharray="3,3" />`;
+      svgHtml += `<line x1="${pC.x}" y1="${pC.y + 4}" x2="${pC.x}" y2="${bY + 8}" stroke="#475569" stroke-width="1" stroke-dasharray="3,3" />`;
+      // Maßlinie mit Pfeilen
+      svgHtml += `<line x1="${pA.x + 6}" y1="${bY}" x2="${pC.x - 6}" y2="${bY}" stroke="#f59e0b" stroke-width="1.5" marker-start="url(#arrow)" marker-end="url(#arrow)" />`;
+      svgHtml += `<rect x="${pA.x + pixB / 2 - 45}" y="${bY - 9}" width="90" height="18" fill="#1e293b" rx="4" />`;
+      svgHtml += `<text x="${pA.x + pixB / 2}" y="${bY + 4}" fill="#f59e0b" font-size="12" font-family="JetBrains Mono" font-weight="bold" text-anchor="middle">b = ${b.toFixed(1)} mm</text>`;
+
+      // 7. Bemaßung Kathete a (rechts vertikal)
+      const aX = pC.x + dimOffset;
+      // Hilfslinien
+      svgHtml += `<line x1="${pC.x + 4}" y1="${pC.y}" x2="${aX + 8}" y2="${pC.y}" stroke="#475569" stroke-width="1" stroke-dasharray="3,3" />`;
+      svgHtml += `<line x1="${pB.x + 4}" y1="${pB.y}" x2="${aX + 8}" y2="${pB.y}" stroke="#475569" stroke-width="1" stroke-dasharray="3,3" />`;
+      // Maßlinie
+      svgHtml += `<line x1="${aX}" y1="${pC.y - 6}" x2="${aX}" y2="${pB.y + 6}" stroke="#f59e0b" stroke-width="1.5" marker-start="url(#arrow)" marker-end="url(#arrow)" />`;
+      svgHtml += `<rect x="${aX - 9}" y="${pB.y + pixA / 2 - 35}" width="18" height="70" fill="#1e293b" rx="4" transform="rotate(-90 ${aX} ${pB.y + pixA / 2})" />`;
+      svgHtml += `<text x="${aX}" y="${pB.y + pixA / 2}" fill="#f59e0b" font-size="12" font-family="JetBrains Mono" font-weight="bold" text-anchor="middle" transform="rotate(-90 ${aX} ${pB.y + pixA / 2}) dy(-6)">a = ${a.toFixed(1)} mm</text>`;
+
+      // 8. Bemaßung Hypotenuse c (schräg parallel versetzt)
+      // Normalenvektor nach oben-links
+      const dx = pB.x - pA.x;
+      const dy = pB.y - pA.y;
+      const len = Math.hypot(dx, dy);
+      const nx = (dy / len) * dimOffset; // nach außen
+      const ny = (-dx / len) * dimOffset;
+
+      const cA = { x: pA.x + nx, y: pA.y + ny };
+      const cB = { x: pB.x + nx, y: pB.y + ny };
+
+      // Hilfslinien
+      svgHtml += `<line x1="${pA.x}" y1="${pA.y}" x2="${cA.x + nx * 0.2}" y2="${cA.y + ny * 0.2}" stroke="#475569" stroke-width="1" stroke-dasharray="3,3" />`;
+      svgHtml += `<line x1="${pB.x}" y1="${pB.y}" x2="${cB.x + nx * 0.2}" y2="${cB.y + ny * 0.2}" stroke="#475569" stroke-width="1" stroke-dasharray="3,3" />`;
+      // Schräge Maßlinie
+      svgHtml += `<line x1="${cA.x + (dx/len)*6}" y1="${cA.y + (dy/len)*6}" x2="${cB.x - (dx/len)*6}" y2="${cB.y - (dy/len)*6}" stroke="#38bdf8" stroke-width="1.5" marker-start="url(#arrow-cyan)" marker-end="url(#arrow-cyan)" />`;
+
+      // Text entlang der Neigung
+      const midHypX = (cA.x + cB.x) / 2;
+      const midHypY = (cA.y + cB.y) / 2;
+      const degHyp = toDeg(Math.atan2(dy, dx));
+
+      svgHtml += `<g transform="translate(${midHypX}, ${midHypY}) rotate(${degHyp})">
+                    <rect x="-55" y="-14" width="110" height="18" fill="#1e293b" rx="4" />
+                    <text x="0" y="0" fill="#38bdf8" font-size="12" font-family="JetBrains Mono" font-weight="bold" text-anchor="middle" dominant-baseline="central">c = ${c.toFixed(1)} mm</text>
+                  </g>`;
+
+      drawingLayer.innerHTML = svgHtml;
+    }
+
+    // Event-Listener
+    calcMode.addEventListener('change', () => updateModeInputs(true));
+    inputVal1.addEventListener('input', calculate);
+    inputVal2.addEventListener('input', calculate);
+
+    // Reset auf Standardwerte
+    document.getElementById('btnReset').addEventListener('click', () => {
+      calcMode.value = 'a_alpha';
+      updateModeInputs(true);
+    });
+
+    // Werte kopieren
+    document.getElementById('btnCopyValues').addEventListener('click', () => {
+      const summary = `Rechtwinkliges Dreieck (Fertigungsmaße):\n` +
+                      `Kathete a: ${res_a.textContent} mm\n` +
+                      `Kathete b: ${res_b.textContent} mm\n` +
+                      `Hypotenuse c: ${res_c.textContent} mm\n` +
+                      `Winkel α: ${res_alpha.textContent}°\n` +
+                      `Winkel β: ${res_beta.textContent}°\n` +
+                      `Winkel γ: 90.00°\n` +
+                      `Fläche A: ${res_area.textContent}`;
+
+      // Clipboard-Fallback gemäß Sicherheitsregeln
+      const tempInput = document.createElement('textarea');
+      tempInput.value = summary;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempInput);
+
+      const copyBtn = document.getElementById('btnCopyValues');
+      const origHtml = copyBtn.innerHTML;
+      copyBtn.innerHTML = `<i data-lucide="check" class="w-3.5 h-3.5"></i> Kopiert!`;
+      lucide.createIcons();
+      setTimeout(() => {
+        copyBtn.innerHTML = origHtml;
+        lucide.createIcons();
+      }, 2000);
+    });
+
+    // Initialer Aufruf
+    window.onload = function() {
+      updateModeInputs(true);
+    };
+  </script>
+</body>
+</html>
